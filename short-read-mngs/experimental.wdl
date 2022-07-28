@@ -8,6 +8,7 @@ task GenerateTaxidFasta {
     File taxid_fasta_in_gsnap_hitsummary_tab
     File taxid_fasta_in_rapsearch2_hitsummary_tab
     File lineage_db
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -28,6 +29,7 @@ task GenerateTaxidFasta {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -36,6 +38,7 @@ task GenerateTaxidLocator {
     String docker_image_id
     String s3_wd_uri
     File taxid_annot_fasta
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -68,6 +71,7 @@ task GenerateTaxidLocator {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -91,6 +95,7 @@ task GenerateAlignmentViz {
     File taxid_locations_combined_json
     File nt_db
     File nt_loc_db
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -113,6 +118,7 @@ task GenerateAlignmentViz {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -124,6 +130,7 @@ task RunSRST2 {
     String file_ext
     File resist_genome_db
     File resist_genome_bed
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -149,6 +156,7 @@ task RunSRST2 {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -164,6 +172,7 @@ task GenerateCoverageViz {
     File contig_in_contigs_fasta
     File gsnap_m8_gsnap_deduped_m8
     File nt_info_db
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -185,6 +194,7 @@ task GenerateCoverageViz {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -196,6 +206,7 @@ task NonhostFastq {
     File nonhost_fasta_refined_taxid_annot_fasta
     File duplicate_clusters_csv
     Boolean use_taxon_whitelist
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -217,6 +228,7 @@ task NonhostFastq {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -247,6 +259,7 @@ workflow czid_experimental {
     File resist_genome_db = "s3://czid-public-references/amr/ARGannot_r2.fasta"
     File resist_genome_bed = "s3://czid-public-references/amr/argannot_genome.bed"
     Boolean use_taxon_whitelist = false
+    Int cpu = 8
   }
 
   call GenerateTaxidFasta {
@@ -256,14 +269,16 @@ workflow czid_experimental {
       taxid_fasta_in_annotated_merged_fa = taxid_fasta_in_annotated_merged_fa,
       taxid_fasta_in_gsnap_hitsummary_tab = taxid_fasta_in_gsnap_hitsummary_tab,
       taxid_fasta_in_rapsearch2_hitsummary_tab = taxid_fasta_in_rapsearch2_hitsummary_tab,
-      lineage_db = lineage_db
+      lineage_db = lineage_db,
+      cpu = cpu
   }
 
   call GenerateTaxidLocator {
     input:
       docker_image_id = docker_image_id,
       s3_wd_uri = s3_wd_uri,
-      taxid_annot_fasta = GenerateTaxidFasta.taxid_annot_fasta
+      taxid_annot_fasta = GenerateTaxidFasta.taxid_annot_fasta,
+      cpu = cpu
   }
 
   call GenerateAlignmentViz {
@@ -285,7 +300,8 @@ workflow czid_experimental {
       taxid_locations_family_nr_json = GenerateTaxidLocator.taxid_locations_family_nr_json,
       taxid_locations_combined_json = GenerateTaxidLocator.taxid_locations_combined_json,
       nt_db = nt_db,
-      nt_loc_db = nt_loc_db
+      nt_loc_db = nt_loc_db,
+      cpu = cpu
   }
 
   call RunSRST2 {
@@ -295,7 +311,8 @@ workflow czid_experimental {
       fastqs = select_all([fastqs_0, fastqs_1]),
       file_ext = file_ext,
       resist_genome_db = resist_genome_db,
-      resist_genome_bed = resist_genome_bed
+      resist_genome_bed = resist_genome_bed,
+      cpu = cpu
   }
 
   call GenerateCoverageViz {
@@ -309,7 +326,8 @@ workflow czid_experimental {
       contig_in_contig_stats_json = contig_in_contig_stats_json,
       contig_in_contigs_fasta = contig_in_contigs_fasta,
       gsnap_m8_gsnap_deduped_m8 = gsnap_m8_gsnap_deduped_m8,
-      nt_info_db = nt_info_db
+      nt_info_db = nt_info_db,
+      cpu = cpu
   }
 
   call NonhostFastq {
@@ -319,7 +337,8 @@ workflow czid_experimental {
       fastqs = select_all([fastqs_0, fastqs_1]),
       nonhost_fasta_refined_taxid_annot_fasta = nonhost_fasta_refined_taxid_annot_fasta,
       duplicate_clusters_csv = duplicate_clusters_csv,
-      use_taxon_whitelist = use_taxon_whitelist
+      use_taxon_whitelist = use_taxon_whitelist,
+      cpu = cpu
   }
 
   output {

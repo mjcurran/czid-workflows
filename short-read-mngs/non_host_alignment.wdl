@@ -16,6 +16,7 @@ task RunAlignment_gsnap_out {
     Boolean use_deuterostome_filter
     Boolean use_taxon_whitelist
     Boolean? run_locally = false
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -39,6 +40,7 @@ task RunAlignment_gsnap_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -55,6 +57,7 @@ task RunAlignment_rapsearch2_out {
     String index_dir_suffix
     Boolean use_taxon_whitelist
 	  Boolean? run_locally = false
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -78,6 +81,7 @@ task RunAlignment_rapsearch2_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -86,6 +90,7 @@ task CombineTaxonCounts {
     String docker_image_id
     String s3_wd_uri
     Array[File] counts_json_files
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -106,6 +111,7 @@ task CombineTaxonCounts {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -124,6 +130,7 @@ task GenerateAnnotatedFasta {
     File rapsearch2_counts_with_dcr_json
     File czid_dedup_out_duplicate_clusters_csv
     File duplicate_cluster_sizes_tsv
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -145,6 +152,7 @@ task GenerateAnnotatedFasta {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -158,6 +166,7 @@ task RunAlignment_minimap2_out {
         Boolean? run_locally = false
         File? local_minimap2_index 
         String prefix
+        Int cpu
     }
 
     command <<<
@@ -193,6 +202,7 @@ task RunAlignment_minimap2_out {
 
     runtime {
         docker: docker_image_id
+        cpu: cpu
     }
 }
 task RunAlignment_diamond_out {
@@ -205,6 +215,7 @@ task RunAlignment_diamond_out {
         Boolean? run_locally = false
         File? local_diamond_index
         String prefix
+        Int cpu
     }
 
     command <<<
@@ -238,6 +249,7 @@ task RunAlignment_diamond_out {
 
     runtime {
         docker: docker_image_id
+        cpu: cpu
     }
 }
 
@@ -254,6 +266,7 @@ task RunCallHitsMinimap2 {
         String docker_image_id
         String count_type = "NT"
         String s3_wd_uri
+        Int cpu
     }
 
     command <<<
@@ -295,6 +308,7 @@ task RunCallHitsMinimap2 {
 
     runtime {
         docker: docker_image_id
+        cpu: cpu
     }
 }
 task RunCallHitsDiamond {
@@ -310,6 +324,7 @@ task RunCallHitsDiamond {
         String docker_image_id
         String count_type = "NR"
         String s3_wd_uri
+        Int cpu
     }
     command <<<
         # --step-name diamond_call_hits_out
@@ -350,6 +365,7 @@ task RunCallHitsDiamond {
 
     runtime {
         docker: docker_image_id
+        cpu: cpu
     }
 }
 
@@ -383,6 +399,7 @@ workflow czid_non_host_alignment {
     String diamond_args = "mid-sensitive"
     String minimap2_prefix = "gsnap"
     String diamond_prefix = "rapsearch2"
+    Int cpu
 
   }
   call RunAlignment_minimap2_out { 
@@ -394,6 +411,7 @@ workflow czid_non_host_alignment {
       minimap2_args = minimap2_args,
       run_locally = defined(minimap2_local_db_path),
       local_minimap2_index = minimap2_local_db_path,
+      cpu = cpu,
       prefix= minimap2_prefix
   }
   call RunCallHitsMinimap2{ 
@@ -407,7 +425,8 @@ workflow czid_non_host_alignment {
       prefix = minimap2_prefix,
       min_read_length = min_read_length,
       docker_image_id = docker_image_id,
-      s3_wd_uri = s3_wd_uri,
+      cpu = cpu,
+      s3_wd_uri = s3_wd_uri
   }
   call RunAlignment_diamond_out {
     input: 
@@ -418,6 +437,7 @@ workflow czid_non_host_alignment {
       prefix = diamond_prefix,
       run_locally = defined(diamond_local_db_path),
       local_diamond_index = diamond_local_db_path,
+      cpu = cpu,
       docker_image_id = docker_image_id
   }
   call RunCallHitsDiamond { 
@@ -430,13 +450,15 @@ workflow czid_non_host_alignment {
       accession2taxid = accession2taxid_db,
       prefix = diamond_prefix,
       docker_image_id = docker_image_id,
-      s3_wd_uri = s3_wd_uri,
+      cpu = cpu,
+      s3_wd_uri = s3_wd_uri
   }
 
   call CombineTaxonCounts {
     input:
       docker_image_id = docker_image_id,
       s3_wd_uri = s3_wd_uri,
+      cpu = cpu,
       counts_json_files = [
         RunCallHitsMinimap2.counts_json,
         RunCallHitsDiamond.counts_json
@@ -457,6 +479,7 @@ workflow czid_non_host_alignment {
       rapsearch2_hitsummary_tab = RunCallHitsDiamond.hitsummary,
       rapsearch2_counts_with_dcr_json = RunCallHitsDiamond.counts_json,
       czid_dedup_out_duplicate_clusters_csv = czid_dedup_out_duplicate_clusters_csv,
+      cpu = cpu,
       duplicate_cluster_sizes_tsv = duplicate_cluster_sizes_tsv
   }
 

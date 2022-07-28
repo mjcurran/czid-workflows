@@ -19,12 +19,14 @@ workflow czid_short_read_mngs {
         String diamond_args
         String non_host_gsnap_genome_name = "nt_k16"
         String s3_wd_uri = ""
+        Int cpu = 8
     }
     call stage1.czid_host_filter as host_filter {
         input:
         fastqs_0 = fastqs_0,
         fastqs_1 = fastqs_1,
         docker_image_id = docker_image_id,
+        cpu = cpu,
         s3_wd_uri = s3_wd_uri
     }
     call stage2.czid_non_host_alignment as non_host_alignment {
@@ -39,6 +41,7 @@ workflow czid_short_read_mngs {
         diamond_local_db_path = diamond_local_db_path,
         diamond_args = diamond_args,
         docker_image_id = docker_image_id,
+        cpu = cpu,
         s3_wd_uri = s3_wd_uri
     }
     call stage3.czid_postprocess as postprocess {
@@ -57,6 +60,7 @@ workflow czid_short_read_mngs {
         rapsearch2_out_rapsearch2_hitsummary_tab = non_host_alignment.rapsearch2_out_rapsearch2_hitsummary_tab,
         rapsearch2_out_rapsearch2_counts_with_dcr_json = non_host_alignment.rapsearch2_out_rapsearch2_counts_with_dcr_json,
         docker_image_id = docker_image_id,
+        cpu = cpu,
         s3_wd_uri = s3_wd_uri
     }
     call stage4.czid_experimental as experimental {
@@ -76,6 +80,7 @@ workflow czid_short_read_mngs {
         nonhost_fasta_refined_taxid_annot_fasta = postprocess.refined_taxid_fasta_out_assembly_refined_taxid_annot_fasta,
         duplicate_clusters_csv = host_filter.czid_dedup_out_duplicate_clusters_csv,
         docker_image_id = docker_image_id,
+        cpu = cpu,
         s3_wd_uri = s3_wd_uri
     }
 }

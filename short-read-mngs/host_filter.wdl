@@ -6,6 +6,7 @@ task RunValidateInput {
     String s3_wd_uri
     Array[File] fastqs
     Int max_input_fragments
+    Int cpu
     String file_ext
   }
   command<<<
@@ -30,6 +31,7 @@ task RunValidateInput {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -42,6 +44,7 @@ task RunStar {
     File star_genome
     String nucleotide_type
     String host_genome
+    Int cpu
     String genome_dir = "STAR_genome/part-0/"
   }
   command<<<
@@ -175,6 +178,7 @@ task RunStar {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -183,6 +187,7 @@ task RunTrimmomatic {
     String docker_image_id
     String s3_wd_uri
     Array[File] unmapped_fastq
+    Int cpu
     File adapter_fasta
   }
   command<<<
@@ -208,6 +213,7 @@ task RunTrimmomatic {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -215,6 +221,7 @@ task RunPriceSeq {
   input {
     String docker_image_id
     String s3_wd_uri
+    Int cpu
     Array[File] trimmomatic_fastq
   }
   command<<<
@@ -239,6 +246,7 @@ task RunPriceSeq {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -246,6 +254,7 @@ task RunCZIDDedup {
   input {
     String docker_image_id
     String s3_wd_uri
+    Int cpu
     Array[File] priceseq_fa
   }
   command<<<
@@ -272,6 +281,7 @@ task RunCZIDDedup {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -281,6 +291,7 @@ task RunLZW {
     String s3_wd_uri
     Array[File] dedup_fa
     File duplicate_clusters_csv
+    Int cpu
     File duplicate_cluster_sizes_tsv
   }
   command<<<
@@ -303,6 +314,7 @@ task RunLZW {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -314,6 +326,7 @@ task RunBowtie2_bowtie2_out {
     Array[File] dedup_fa
     File duplicate_clusters_csv
     File duplicate_cluster_sizes_tsv
+    Int cpu
     File bowtie2_genome
   }
   command<<<
@@ -339,6 +352,7 @@ task RunBowtie2_bowtie2_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -350,6 +364,7 @@ task RunSubsample {
     Array[File] dedup_fa
     File duplicate_clusters_csv
     File duplicate_cluster_sizes_tsv
+    Int cpu
     Int max_subsample_fragments
   }
   command<<<
@@ -373,6 +388,7 @@ task RunSubsample {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -386,6 +402,7 @@ task RunStarDownstream {
     Array[File] dedup_fa
     File duplicate_clusters_csv
     File duplicate_cluster_sizes_tsv
+    Int cpu
     File human_star_genome
   }
   command<<<
@@ -410,6 +427,7 @@ task RunStarDownstream {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -421,6 +439,7 @@ task RunBowtie2_bowtie2_human_out {
     Array[File] dedup_fa
     File duplicate_clusters_csv
     File duplicate_cluster_sizes_tsv
+    Int cpu
     File human_bowtie2_genome
   }
   command<<<
@@ -446,6 +465,7 @@ task RunBowtie2_bowtie2_human_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -457,6 +477,7 @@ task RunGsnapFilter {
     Array[File] dedup_fa
     File duplicate_clusters_csv
     File duplicate_cluster_sizes_tsv
+    Int cpu
     File gsnap_genome
   }
   command<<<
@@ -482,6 +503,7 @@ task RunGsnapFilter {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -502,6 +524,7 @@ workflow czid_host_filter {
     String human_bowtie2_genome
     Int max_input_fragments
     Int max_subsample_fragments
+    Int cpu
   }
 
   call RunValidateInput {
@@ -510,6 +533,7 @@ workflow czid_host_filter {
       s3_wd_uri = s3_wd_uri,
       fastqs = select_all([fastqs_0, fastqs_1]),
       file_ext = file_ext,
+      cpu = cpu,
       max_input_fragments = max_input_fragments
   }
 
@@ -521,6 +545,7 @@ workflow czid_host_filter {
       valid_input_fastq = select_all([RunValidateInput.valid_input1_fastq, RunValidateInput.valid_input2_fastq]),
       star_genome = star_genome,
       nucleotide_type = nucleotide_type,
+      cpu = cpu,
       host_genome = host_genome
   }
 
@@ -529,6 +554,7 @@ workflow czid_host_filter {
       docker_image_id = docker_image_id,
       s3_wd_uri = s3_wd_uri,
       unmapped_fastq = select_all([RunStar.unmapped1_fastq, RunStar.unmapped2_fastq]),
+      cpu = cpu,
       adapter_fasta = adapter_fasta
   }
 
@@ -536,6 +562,7 @@ workflow czid_host_filter {
     input:
       docker_image_id = docker_image_id,
       s3_wd_uri = s3_wd_uri,
+      cpu = cpu,
       trimmomatic_fastq = select_all([RunTrimmomatic.trimmomatic1_fastq, RunTrimmomatic.trimmomatic2_fastq])
   }
 
@@ -543,6 +570,7 @@ workflow czid_host_filter {
     input:
       docker_image_id = docker_image_id,
       s3_wd_uri = s3_wd_uri,
+      cpu = cpu,
       priceseq_fa = select_all([RunPriceSeq.priceseq1_fa, RunPriceSeq.priceseq2_fa])
   }
 
@@ -552,6 +580,7 @@ workflow czid_host_filter {
       s3_wd_uri = s3_wd_uri,
       dedup_fa = select_all([RunCZIDDedup.dedup1_fa, RunCZIDDedup.dedup2_fa]),
       duplicate_clusters_csv = RunCZIDDedup.duplicate_clusters_csv,
+      cpu = cpu,
       duplicate_cluster_sizes_tsv = RunCZIDDedup.duplicate_cluster_sizes_tsv
   }
 
@@ -563,6 +592,7 @@ workflow czid_host_filter {
       dedup_fa = select_all([RunCZIDDedup.dedup1_fa, RunCZIDDedup.dedup2_fa]),
       duplicate_clusters_csv = RunCZIDDedup.duplicate_clusters_csv,
       duplicate_cluster_sizes_tsv = RunCZIDDedup.duplicate_cluster_sizes_tsv,
+      cpu = cpu,
       bowtie2_genome = bowtie2_genome
   }
 
@@ -588,6 +618,7 @@ workflow czid_host_filter {
         dedup_fa = select_all([RunCZIDDedup.dedup1_fa, RunCZIDDedup.dedup2_fa]),
         duplicate_clusters_csv = RunCZIDDedup.duplicate_clusters_csv,
         duplicate_cluster_sizes_tsv = RunCZIDDedup.duplicate_cluster_sizes_tsv,
+        cpu = cpu,
         human_star_genome = human_star_genome
     }
 
@@ -599,6 +630,7 @@ workflow czid_host_filter {
         dedup_fa = select_all([RunCZIDDedup.dedup1_fa, RunCZIDDedup.dedup2_fa]),
         duplicate_clusters_csv = RunCZIDDedup.duplicate_clusters_csv,
         duplicate_cluster_sizes_tsv = RunCZIDDedup.duplicate_cluster_sizes_tsv,
+        cpu = cpu,
         human_bowtie2_genome = human_bowtie2_genome
     }
   }
@@ -615,6 +647,7 @@ workflow czid_host_filter {
       dedup_fa = select_all([RunCZIDDedup.dedup1_fa, RunCZIDDedup.dedup2_fa]),
       duplicate_clusters_csv = RunCZIDDedup.duplicate_clusters_csv,
       duplicate_cluster_sizes_tsv = RunCZIDDedup.duplicate_cluster_sizes_tsv,
+      cpu = cpu,
       gsnap_genome = gsnap_genome
   }
 

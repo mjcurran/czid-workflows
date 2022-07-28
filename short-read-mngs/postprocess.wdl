@@ -7,6 +7,7 @@ task RunAssembly {
     Array[File] host_filter_out_gsnap_filter_fa
     File duplicate_cluster_sizes_tsv
     Int min_contig_length
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -33,6 +34,7 @@ task RunAssembly {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -44,6 +46,7 @@ task GenerateCoverageStats {
     File assembly_scaffolds_fasta
     File assembly_read_contig_sam
     File assembly_contig_stats_json
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -65,6 +68,7 @@ task GenerateCoverageStats {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -79,6 +83,7 @@ task DownloadAccessions_gsnap_accessions_out {
     File nt_db
     File nt_loc_db
     File lineage_db
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -99,6 +104,7 @@ task DownloadAccessions_gsnap_accessions_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -113,6 +119,7 @@ task DownloadAccessions_rapsearch2_accessions_out {
     File lineage_db
     File nr_loc_db
     File nr_db
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -133,6 +140,7 @@ task DownloadAccessions_rapsearch2_accessions_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -155,6 +163,7 @@ task BlastContigs_refined_gsnap_out {
     File deuterostome_db
     Boolean use_deuterostome_filter
     Boolean use_taxon_whitelist
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -180,6 +189,7 @@ task BlastContigs_refined_gsnap_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -200,6 +210,7 @@ task BlastContigs_refined_rapsearch2_out {
     File lineage_db
     File taxon_blacklist
     Boolean use_taxon_whitelist
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -225,6 +236,7 @@ task BlastContigs_refined_rapsearch2_out {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -247,6 +259,7 @@ task ComputeMergedTaxonCounts {
 
     Boolean use_deuterostome_filter
     Boolean use_taxon_whitelist
+    Int cpu
   }
 
   command<<<
@@ -272,6 +285,7 @@ task ComputeMergedTaxonCounts {
 
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -280,6 +294,7 @@ task CombineTaxonCounts {
     String docker_image_id
     String s3_wd_uri
     Array[File] counts_json_files
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -300,6 +315,7 @@ task CombineTaxonCounts {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -308,6 +324,7 @@ task CombineJson {
     String docker_image_id
     String s3_wd_uri
     Array[File] json_files
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -328,6 +345,7 @@ task CombineJson {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -350,6 +368,7 @@ task GenerateAnnotatedFasta {
     File assembly_rapsearch2_blast_top_m8
     File czid_dedup_out_duplicate_clusters_csv
     File duplicate_cluster_sizes_tsv
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -371,6 +390,7 @@ task GenerateAnnotatedFasta {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -393,6 +413,7 @@ task GenerateTaxidFasta {
     File assembly_rapsearch2_contig_summary_json
     File assembly_rapsearch2_blast_top_m8
     File lineage_db
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -413,6 +434,7 @@ task GenerateTaxidFasta {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -421,6 +443,7 @@ task GenerateTaxidLocator {
     String docker_image_id
     String s3_wd_uri
     File assembly_refined_taxid_annot_fasta
+    Int cpu
   }
   command<<<
   set -euxo pipefail
@@ -453,6 +476,7 @@ task GenerateTaxidLocator {
   }
   runtime {
     docker: docker_image_id
+    cpu: cpu
   }
 }
 
@@ -484,6 +508,7 @@ workflow czid_postprocess {
     Boolean use_deuterostome_filter = true
     Boolean use_taxon_whitelist = false
     Int min_contig_length = 100
+    Int cpu = 8
   }
 
   call RunAssembly {
@@ -492,6 +517,7 @@ workflow czid_postprocess {
       s3_wd_uri = s3_wd_uri,
       host_filter_out_gsnap_filter_fa = select_all([host_filter_out_gsnap_filter_1_fa, host_filter_out_gsnap_filter_2_fa, host_filter_out_gsnap_filter_merged_fa]),
       duplicate_cluster_sizes_tsv = duplicate_cluster_sizes_tsv,
+      cpu = cpu,
       min_contig_length = min_contig_length
   }
 
@@ -502,6 +528,7 @@ workflow czid_postprocess {
       assembly_contigs_fasta = RunAssembly.assembly_contigs_fasta,
       assembly_scaffolds_fasta = RunAssembly.assembly_scaffolds_fasta,
       assembly_read_contig_sam = RunAssembly.assembly_read_contig_sam,
+      cpu = cpu,
       assembly_contig_stats_json = RunAssembly.assembly_contig_stats_json
   }
 
@@ -515,6 +542,7 @@ workflow czid_postprocess {
       gsnap_out_gsnap_counts_with_dcr_json = gsnap_out_gsnap_counts_with_dcr_json,
       nt_db = nt_db,
       nt_loc_db = nt_loc_db,
+      cpu = cpu,
       lineage_db = lineage_db
   }
 
@@ -528,6 +556,7 @@ workflow czid_postprocess {
       rapsearch2_out_rapsearch2_counts_with_dcr_json = rapsearch2_out_rapsearch2_counts_with_dcr_json,
       nr_db = nr_db,
       nr_loc_db = nr_loc_db,
+      cpu = cpu,
       lineage_db = lineage_db
   }
 
@@ -549,6 +578,7 @@ workflow czid_postprocess {
       taxon_blacklist = taxon_blacklist,
       deuterostome_db = deuterostome_db,
       use_deuterostome_filter = use_deuterostome_filter,
+      cpu = cpu,
       use_taxon_whitelist = use_taxon_whitelist
   }
 
@@ -568,6 +598,7 @@ workflow czid_postprocess {
       duplicate_cluster_sizes_tsv = duplicate_cluster_sizes_tsv,
       lineage_db = lineage_db,
       taxon_blacklist = taxon_blacklist,
+      cpu = cpu,
       use_taxon_whitelist = use_taxon_whitelist
   }
 
@@ -589,6 +620,7 @@ workflow czid_postprocess {
       deuterostome_db = deuterostome_db,
 
       use_deuterostome_filter = use_deuterostome_filter,
+      cpu = cpu,
       use_taxon_whitelist = use_taxon_whitelist
   }
 
@@ -599,6 +631,7 @@ workflow czid_postprocess {
       counts_json_files = [
         BlastContigs_refined_gsnap_out.assembly_refined_gsnap_counts_with_dcr_json,
         BlastContigs_refined_rapsearch2_out.assembly_refined_rapsearch2_counts_with_dcr_json,
+        cpu = cpu,
         ComputeMergedTaxonCounts.merged_taxon_counts_with_dcr_json
       ]
   }
@@ -607,6 +640,7 @@ workflow czid_postprocess {
     input:
       docker_image_id = docker_image_id,
       s3_wd_uri = s3_wd_uri,
+      cpu = cpu,
       json_files = [
         BlastContigs_refined_gsnap_out.assembly_gsnap_contig_summary_json,
         BlastContigs_refined_rapsearch2_out.assembly_rapsearch2_contig_summary_json,
@@ -632,6 +666,7 @@ workflow czid_postprocess {
       assembly_rapsearch2_contig_summary_json = BlastContigs_refined_rapsearch2_out.assembly_rapsearch2_contig_summary_json,
       assembly_rapsearch2_blast_top_m8 = BlastContigs_refined_rapsearch2_out.assembly_rapsearch2_blast_top_m8,
       czid_dedup_out_duplicate_clusters_csv = czid_dedup_out_duplicate_clusters_csv,
+      cpu = cpu,
       duplicate_cluster_sizes_tsv = duplicate_cluster_sizes_tsv
   }
 
@@ -653,6 +688,7 @@ workflow czid_postprocess {
       assembly_refined_rapsearch2_counts_with_dcr_json = BlastContigs_refined_rapsearch2_out.assembly_refined_rapsearch2_counts_with_dcr_json,
       assembly_rapsearch2_contig_summary_json = BlastContigs_refined_rapsearch2_out.assembly_rapsearch2_contig_summary_json,
       assembly_rapsearch2_blast_top_m8 = BlastContigs_refined_rapsearch2_out.assembly_rapsearch2_blast_top_m8,
+      cpu = cpu,
       lineage_db = lineage_db
   }
 
@@ -660,6 +696,7 @@ workflow czid_postprocess {
     input:
       docker_image_id = docker_image_id,
       s3_wd_uri = s3_wd_uri,
+      cpu = cpu,
       assembly_refined_taxid_annot_fasta = GenerateTaxidFasta.assembly_refined_taxid_annot_fasta
   }
 
